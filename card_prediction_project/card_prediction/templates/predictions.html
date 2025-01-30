@@ -1,0 +1,38 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Predictions</title>
+</head>
+<body>
+    <h1>Predictions</h1>
+    {% if error %}
+        <h1>Hii</h1>
+        <p>{{ error }}</p>
+    {% else %}
+        <h2>Monte Carlo Predictions</h2>
+        <table border="1">
+            <tr><th>Step Prediction</th></tr>
+            {% for step in predictions.monte_carlo %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ step.cards }} ({{ step.probability|floatformat:2 }}%)</td>
+                </tr>
+            {% endfor %}
+        </table>
+
+        <h2>Random Forest Predictions</h2>
+        <p>{{ predictions.random_forest }}</p>
+
+        <h2>LSTM Predictions</h2>
+        <p>{{ predictions.lstm }}</p>
+
+        <h2>Trend Analysis</h2>
+        <ul>
+            {% for trend in predictions.trend_analysis %}
+                <li>{{ trend.0 }}: {{ trend.1 }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>

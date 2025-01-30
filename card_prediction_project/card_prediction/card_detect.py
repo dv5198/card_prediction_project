@@ -1,6 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Draw
-from .forms import DrawForm
+# from .forms import DrawForm
 import random
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
@@ -11,14 +10,11 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import LearningRateScheduler
 import matplotlib.pyplot as plt
 
-def predict_view(request):
-    return render(request, "predictions.html")
 
-# --- Add a draw to the database ---
+# from .models import Draw
+
+
 def add_draw(request):
-    """
-    Handles adding a new draw to the database.
-    """
     if request.method == "POST":
         form = DrawForm(request.POST)
         if form.is_valid():
@@ -28,30 +24,11 @@ def add_draw(request):
                 diamond=form.cleaned_data["diamond"],
                 club=form.cleaned_data["club"],
             )
-        return redirect("home")
+            return redirect("home")
     else:
-            form = DrawForm()
-            return render(request, "add_draw.html", {"form": form})
+        form = DrawForm()
+    return render(request, "add_draw.html", {"form": form})
 
-def predict(request):
-    probabilities = calculate_probabilities()
-    print("====   ",probabilities)
-    if not probabilities:
-        return render(request, "predictions.html", {"error": "No data available for predictions."})
-
-    monte_carlo_results = monte_carlo_simulation(probabilities)
-    random_forest_prediction = train_random_forest()
-    lstm_prediction = train_lstm()
-    trend_analysis_results = trend_analysis()
-
-    combined_results = {
-        "monte_carlo": monte_carlo_results,
-        "random_forest": random_forest_prediction,
-        "lstm": lstm_prediction,
-        "trend_analysis": trend_analysis_results,
-    }
-
-    return render(request, "predictions.html", {"predictions": combined_results})
 
 def calculate_probabilities():
     draws = Draw.objects.all()
@@ -71,6 +48,7 @@ def calculate_probabilities():
     total_cards = len(draws) * 4
     probabilities = {card: count / total_cards for card, count in card_counts.items()}
     return probabilities
+
 
 def monte_carlo_simulation(probabilities, steps=7, num_simulations=1000):
     cards = list(probabilities.keys())
@@ -98,6 +76,39 @@ def monte_carlo_simulation(probabilities, steps=7, num_simulations=1000):
         aggregated_results.append(step_results[:3])
 
     return aggregated_results
+
+
+def train_random_forest():
+    draws = Draw.objects.all()
+    if len(draws) < 10:
+        return None
+
+    cards = ["7", "8", "9", "10", "J", "Q", "K", "A"]
+    card_map = {card: i for i, card in enumerate(cards)}
+
+    data = []
+    for draw in draws:
+        data.append([
+            card_map[draw.spade],
+            card_map[draw.heart],
+            card_map[draw.diamond],
+            card_map[draw.club]
+        ])
+
+    X = np.array(data[:-1])
+    y = np.array(data[1:])
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    model = RandomForestClassifier(n_estimators=200, random_state=42)
+    model.fit(X_train, y_train)
+    accuracy = model.score(X_test, y_test)
+    print(f"Random Forest Accuracy: {accuracy * 100:.2f}%")
+
+    if len(X_test) > 0:
+        next_draw = model.predict([X_test[0]])
+        return next_draw.tolist()
+    return ["No prediction (insufficient data)"]
 
 
 def train_lstm():
@@ -151,6 +162,7 @@ def train_lstm():
         return next_draw.tolist()
     return ["No prediction (insufficient data)"]
 
+
 def trend_analysis():
     draws = Draw.objects.all()
     if len(draws) < 20:
@@ -166,36 +178,25 @@ def trend_analysis():
     return sorted_trends[:5]
 
 
-def train_random_forest():
-    draws = Draw.objects.all()
-    if len(draws) < 10:
-        return None
+def predict(request):
+    probabilities = calculate_probabilities()
+    if not probabilities:
+        return render(request, "predictions.html", {"error": "No data available for predictions."})
 
-    cards = ["7", "8", "9", "10", "J", "Q", "K", "A"]
-    card_map = {card: i for i, card in enumerate(cards)}
+    monte_carlo_results = monte_carlo_simulation(probabilities)
+    random_forest_prediction = train_random_forest()
+    lstm_prediction = train_lstm()
+    trend_analysis_results = trend_analysis()
 
-    data = []
-    for draw in draws:
-        data.append([
-            card_map[draw.spade],
-            card_map[draw.heart],
-            card_map[draw.diamond],
-            card_map[draw.club]
-        ])
+    combined_results = {
+        "monte_carlo": monte_carlo_results,
+        "random_forest": random_forest_prediction,
+        "lstm": lstm_prediction,
+        "trend_analysis": trend_analysis_results,
+    }
 
-    X = np.array(data[:-1])
-    y = np.array(data[1:])
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    model = RandomForestClassifier(n_estimators=200, random_state=42)
-    model.fit(X_train, y_train)
-    accuracy = model.score(X_test, y_test)
-    print(f"Random Forest Accuracy: {accuracy * 100:.2f}%")
-
-    if len(X_test) > 0:
-        next_draw = model.predict([X_test[0]])
-        return next_draw.tolist()
-    return ["No prediction (insufficient data)"]
+    return render(request, "predictions.html", {"predictions": combined_results})
 
 
+if __name__ == "__main__":
+    add_draw()
