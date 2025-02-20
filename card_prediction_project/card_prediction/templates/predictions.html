@@ -43,7 +43,7 @@
 
         {% if predictions.random_forest %}
             <h2>Random Forest Predictions</h2>
-            <p>Predicted Card: {{ predictions.random_forest.prediction}}</p>
+            <p>Predicted Card: {{ predictions.random_forest}}</p>
         {% else %}
             <p>No Random Forest prediction available.</p>
         {% endif %}
@@ -51,7 +51,7 @@
 
         {% if predictions.lstm %}
             <h2>LSTM Predictions</h2>
-            <p>Predicted Card: {{ predictions.lstm.prediction }}</p>
+            <p>Predicted Card: {{ predictions.lstm }}</p>
         {% else %}
             <p>No LSTM prediction available.</p>
         {% endif %}
@@ -65,6 +65,11 @@
                 {% endfor %}
             </ul>
         {% endif %}
+          <!-- Save Data Button -->
+        <form method="POST" action="{% url 'save_predictions' %}">
+            {% csrf_token %}
+            <button type="submit" class="save-btn">Save Data</button>
+        </form>
 
     {% endif %}
 

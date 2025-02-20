@@ -1,39 +1,26 @@
+import json
 import os
 import random
 
 import joblib
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from collections import Counter
-
-from django.shortcuts import render, redirect
-from django.conf import settings
-from django.contrib import messages
-from django.core.exceptions import ValidationError
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
 from django.db import transaction
-
-from .models import Draw
-from .forms import DrawForm
-
-from sklearn.utils import compute_class_weight
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from django.http import JsonResponse
+from django.shortcuts import redirect, render
+from django.views.decorators.csrf import csrf_exempt
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.multioutput import MultiOutputClassifier
-
+from tensorflow.keras.layers import (Dense, LSTM)
+from tensorflow.keras.models import load_model
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import (LSTM, Dense, Dropout, Reshape, BatchNormalization,
-                                     Bidirectional)
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.models import load_model
 
-from tensorflow.keras.callbacks import ReduceLROnPlateau, LearningRateScheduler
-from tensorflow.keras.utils import to_categorical
+from .forms import DrawForm
+from .models import Draw
+from .models import Prediction
+
 
 def predict_view(request):
     return render(request, "predictions.html")
@@ -69,7 +56,6 @@ def predict(request):
     monte_carlo_results = monte_carlo_simulation(probabilities)
     print("Random Forest Prediction Running")
     random_forest_prediction = train_random_forest(request)
-    print(random_forest_prediction)
     print("LSTM MODEL Running")
     lstm_prediction = train_lstm(request)
     print(lstm_prediction)
@@ -218,8 +204,8 @@ def train_lstm(request):
 
     # Save the trained model
     model.save('lstm_model.h5')
-
-    return JsonResponse({'message': 'LSTM trained successfully', 'card_mapping': card_mapping})
+    return card_mapping
+    # return JsonResponse({'message': 'LSTM trained successfully', 'card_mapping': card_mapping})
 
 # -------- LSTM PREDICTION  ---------
 @csrf_exempt
@@ -280,3 +266,23 @@ def trend_analysis():
 
     sorted_trends = sorted(trend_counts.items(), key=lambda x: x[1], reverse=True)
     return sorted_trends[:5]
+
+#-------- SAVE PREDICTION DATA  ---------
+
+@csrf_exempt
+def save_predictions(request):
+    if request.method == 'POST':
+        predictions_json = request.POST.get('predictions')
+        predictions = json.loads(predictions_json)
+
+        # Save to DB
+        Prediction.objects.create(
+            monte_carlo=predictions.get('monte_carlo'),
+            random_forest=predictions.get('random_forest', {}).get('prediction'),
+            lstm=predictions.get('lstm', {}).get('prediction'),
+            trend_analysis=predictions.get('trend_analysis')
+        )
+
+        return JsonResponse({'message': 'Predictions saved successfully!'})
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
