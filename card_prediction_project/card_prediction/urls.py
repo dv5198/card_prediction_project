@@ -1,8 +1,8 @@
 from django.urls import path
-from . import views
+from .views import predict, import_excel_data
 
 urlpatterns = [
-    path('', views.predict, name='home'),
+    path('', predict, name='home'),
     # path('add_draw/', views.add_draw, name='add_draw'),
-    path('import_excel/', views.import_excel_data, name="import_excel"),
+    path('import_excel/', import_excel_data, name="import_excel"),
 ]
