@@ -85,20 +85,32 @@ WSGI_APPLICATION = 'card_prediction_project.wsgi.application'
 #     }
 # }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.getenv('DB_NAME', 'neondb'),
+#         'USER': os.getenv('DB_USER', 'neondb_owner'),
+#         'PASSWORD': os.getenv('DB_PASSWORD', 'npg_at2jPsY1oJyd'),
+#         'HOST': os.getenv('DB_HOST', 'ep-bold-grass-a5u82vbp-pooler.us-east-2.aws.neon.tech'),
+#         'PORT': os.getenv('DB_PORT', '5432'),
+#         'OPTIONS': {
+#             'sslmode': 'require',
+#             'connect_timeout': 120,  # Set a higher timeout (in seconds)
+#         },
+#     }
+# }
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'neondb'),
-        'USER': os.getenv('DB_USER', 'neondb_owner'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'npg_at2jPsY1oJyd'),
-        'HOST': os.getenv('DB_HOST', 'ep-bold-grass-a5u82vbp-pooler.us-east-2.aws.neon.tech'),
-        'PORT': os.getenv('DB_PORT', '5432'),
-        'OPTIONS': {
-            'sslmode': 'require',
-            'connect_timeout': 120,  # Set a higher timeout (in seconds)
-        },
+        'NAME': 'postgres',  # Default DB name unless changed
+        'USER': 'postgres',  # Master username
+        'PASSWORD': 'npgat2jPsY1oJyd',  # Master password set during RDS creation
+        'HOST': 'card-prediction.cgrqusmcwa7g.us-east-1.rds.amazonaws.com',  # RDS endpoint
+        'PORT': '5432',  # PostgreSQL default port
     }
 }
+
 
 
 # Password validation
