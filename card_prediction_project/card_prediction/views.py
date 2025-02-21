@@ -268,21 +268,40 @@ def trend_analysis():
     return sorted_trends[:5]
 
 #-------- SAVE PREDICTION DATA  ---------
-
 @csrf_exempt
 def save_predictions(request):
     if request.method == 'POST':
-        predictions_json = request.POST.get('predictions')
-        predictions = json.loads(predictions_json)
-
-        # Save to DB
+        try:
+            data = json.loads(request.body)  # ✅ Get JSON from Fetch API
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+        print(data)
+        # Save data to DB
         Prediction.objects.create(
-            monte_carlo=predictions.get('monte_carlo'),
-            random_forest=predictions.get('random_forest', {}).get('prediction'),
-            lstm=predictions.get('lstm', {}).get('prediction'),
-            trend_analysis=predictions.get('trend_analysis')
+            monte_carlo=data.get('monte_carlo'),
+            random_forest=data.get('random_forest'),
+            lstm=data.get('lstm'),
+            trend_analysis=data.get('trend_analysis')
         )
 
         return JsonResponse({'message': 'Predictions saved successfully!'})
 
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+#
+# @csrf_exempt
+# def save_predictions(request):
+#     if request.method == 'POST':
+#         predictions_json = request.POST.get('predictions')
+#         predictions = json.loads(predictions_json)
+#
+#         # Save to DB
+#         Prediction.objects.create(
+#             monte_carlo=predictions.get('monte_carlo'),
+#             random_forest=predictions.get('random_forest', {}).get('prediction'),
+#             lstm=predictions.get('lstm', {}).get('prediction'),
+#             trend_analysis=predictions.get('trend_analysis')
+#         )
+#
+#         return JsonResponse({'message': 'Predictions saved successfully!'})
+#
+#     return JsonResponse({'error': 'Invalid request'}, status=400)
