@@ -1,7 +1,6 @@
 import json
 import os
 import random
-
 import joblib
 import numpy as np
 import pandas as pd
@@ -21,6 +20,8 @@ from .forms import DrawForm
 from .models import Draw
 from .models import Prediction
 
+from django.conf import settings
+from django.core.exceptions import ValidationError
 
 def predict_view(request):
     return render(request, "predictions.html")
@@ -53,6 +54,7 @@ def predict(request):
     if not probabilities:
         return render(request, "predictions.html", {"error": "No data available for predictions."})
     print("Monte Carlo Running")
+    print(probabilities)
     monte_carlo_results = monte_carlo_simulation(probabilities)
     print("Random Forest Prediction Running")
     random_forest_prediction = train_random_forest(request)
@@ -93,23 +95,56 @@ def handle_uploaded_file(file):
 
 #-------- IMPORT EXCEL DATA  ---------
 @csrf_exempt
+# #-------- FUNCTION TO IMPORT EXCEL FILE INTO DATABASE ---------
 def import_excel_data(request):
-    if request.method == 'POST' and request.FILES.get('file'):
-        file_path = handle_uploaded_file(request.FILES['file'])
+    # Path to the pre-uploaded Excel file
+    file_path = os.path.join(settings.BASE_DIR, os.path.dirname(__file__), "Database_data.xlsx")
+
+    if os.path.exists(file_path):
         try:
-            df = pd.read_excel(file_path, usecols=['Draw Number', 'Card'])
-            df.columns = ['draw_number', 'card']
-            with transaction.atomic():
-                Draw.objects.bulk_create([Draw(**row) for row in df.to_dict(orient='records')])
-            return JsonResponse({'message': 'Data imported successfully'})
+            # Read the Excel file
+            df = pd.read_excel(file_path, engine="openpyxl", header=0)
+            # Validate that the expected columns exist
+
+            if not all(col in df.columns for col in ['Club', 'Diamond', 'Heart', 'spade']):
+                raise ValidationError("Excel file must contain 'spade', 'heart', 'diamond', and 'club' columns.")
+
+            # Iterate over the rows of the DataFrame and create Draw objects
+            print("Please wait inserting Data")
+            # Prepare a list of Draw objects to bulk create
+            draw_objects = []
+            for index, row in df.iterrows():
+                try:
+                    Draw.objects.create(
+                            Club = row['Club'],
+                            Diamond = row['Diamond'],
+                            Heart=row['Heart'],
+                            spade=row['spade'],
+                        )
+                except Exception as e:
+                    print(f"Error inserting row {index}: {e}")
+                    exit()
+
+            # Bulk insert the data into the database
+            Draw.objects.bulk_create(draw_objects)
+
+            messages.success(request, "Data imported successfully!")
+
+        except ValidationError as ve:
+            messages.error(request, f"Validation Error: {ve}")
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+            messages.error(request, f"Error-->: {e}")
+
+    else:
+        messages.error(request, "The specified Excel file does not exist.")
+
+    return render(request, "import_excel.html")  # Render a page to show the result
 
 #-------- PROBABILITIES CALCULATION  ---------
 @csrf_exempt
 def calculate_probabilities(request):
     df = get_card_data()
+    print("------",df)
     if df is None:
         return JsonResponse({'error': 'No data available'}, status=400)
 
@@ -226,18 +261,18 @@ def predict_lstm(request):
 #-------- MONTE CARLO SIMULATION  ---------
 @csrf_exempt
 def monte_carlo_simulation(probabilities, steps=7, num_simulations=1000):
-
+    print(probabilities)
     cards = list(probabilities.keys())
     weights = [probabilities[card] for card in cards]
     predictions = []
-
+    print("KIIIIIIII")
     for _ in range(num_simulations):
         future_draws = []
         for _ in range(steps):
             draw = random.choices(cards, weights=weights, k=2)
             future_draws.append(tuple(sorted(draw)))
         predictions.append(future_draws)
-
+    print(predictions)
     aggregated_results = []
     for step in range(steps):
         step_counts = {}

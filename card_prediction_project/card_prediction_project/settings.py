@@ -103,14 +103,29 @@ WSGI_APPLICATION = 'card_prediction_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',  # Default DB name unless changed
-        'USER': 'postgres',  # Master username
-        'PASSWORD': 'npgat2jPsY1oJyd',  # Master password set during RDS creation
-        'HOST': 'card-prediction.cgrqusmcwa7g.us-east-1.rds.amazonaws.com',  # RDS endpoint
-        'PORT': '5432',  # PostgreSQL default port
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'npgat2jPsY1oJyd',
+        'HOST': 'card-prediction.cgrqusmcwa7g.us-east-1.rds.amazonaws.com',
+        'PORT': '5432',
+        'OPTIONS': {
+            'connect_timeout': 10,  # Avoid long timeouts
+        },
     }
 }
 
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'neondb',  # Extracted from the URL
+#         'USER': 'neondb_owner',  # Username from the URL
+#         'PASSWORD': 'npg_at2jPsY1oJyd',  # Password from the URL
+#         'HOST': 'ep-bold-grass-a5u82vbp-pooler.us-east-2.aws.neon.tech',  # Host from the URL
+#         'PORT': '5432',  # Default PostgreSQL port
+#
+#     }
+# }
 
 
 # Password validation
