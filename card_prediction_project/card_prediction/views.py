@@ -22,6 +22,7 @@ from .models import Prediction
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.contrib import messages
 
 def predict_view(request):
     return render(request, "predictions.html")
