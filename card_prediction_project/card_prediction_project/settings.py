@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-bnb!sg*cr$%+3gth_5)&^^8cnvsk(2+0cq(x@!@5^i7(ffiy&g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['card-prediction-project.onrender.com','*']
 
 
 # Application definition
