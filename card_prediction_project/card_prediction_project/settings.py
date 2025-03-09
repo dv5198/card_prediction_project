@@ -10,9 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-from pathlib import Path
-from dotenv import load_dotenv
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
@@ -29,7 +30,7 @@ SECRET_KEY = 'django-insecure-bnb!sg*cr$%+3gth_5)&^^8cnvsk(2+0cq(x@!@5^i7(ffiy&g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['card-prediction-project.onrender.com','*']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -46,7 +47,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # 'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -159,7 +160,7 @@ USE_I18N = True
 
 USE_TZ = True
 
-os.environ["GUNICORN_CMD_ARGS"] = "--workers=1 --threads=1 --timeout=120"
+# os.environ["GUNICORN_CMD_ARGS"] = "--workers=1 --threads=1 --timeout=120"
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
